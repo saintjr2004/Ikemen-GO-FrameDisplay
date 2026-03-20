@@ -79,7 +79,7 @@ map(jayframedisplay_textMinusB) := 176;		# Blue value for the info text (-oB)
 # ==================================
 
 # Spawn helper
-ignoreHitPause if (!isHelper && (teamMode != Simul || teamMode = Simul && playerNo = teamSide) && roundState = 2 && playerNo = teamLeader && map(jayframedisplay_enable) = 1 && gameMode = "training") {
+ignoreHitPause if (!isHelper && roundState = 2 && playerNo = teamLeader && map(jayframedisplay_enable) = 1 && gameMode = "training") {
 	if (!numHelper(123123619)) {
 		helper{
 			name: "Frame Display";
@@ -93,19 +93,19 @@ ignoreHitPause if (!isHelper && (teamMode != Simul || teamMode = Simul && player
 			pauseMoveTime: -1;
 		}
 	}
-}
-
-# Detect projectile (credit to Inktrebuchet for concept)
-if (!numHelper(123123316)) {
-	helper{
-		name: "Proj Detector";
-		id: 123123316;
-		stateno: 123123316;
-		pos: 0,0;
-		postype: P1;
-		facing: 1;
-		superMoveTime: -1;
-		pauseMoveTime: -1;
+	
+	# Detect projectile (credit to Inktrebuchet for concept)
+	if (!numHelper(123123316)) {
+		helper{
+			name: "Proj Detector";
+			id: 123123316;
+			stateno: 123123316;
+			pos: 0,0;
+			postype: P1;
+			facing: 1;
+			superMoveTime: -1;
+			pauseMoveTime: -1;
+		}
 	}
 }
 
