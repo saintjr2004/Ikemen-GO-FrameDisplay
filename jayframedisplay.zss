@@ -1,0 +1,465 @@
+# ==================================
+# FRAME DISPLAY by jay_ts
+# ==================================
+
+[StateDef -4]
+
+# ==================================
+# CONFIG
+# ==================================
+
+map(jayframedisplay_enable) := 1;			# Enable frame display (0 = off, 1 = on)
+
+map(jayframedisplay_p1StartPosX) := 40;		# P1 start X position of the cells
+map(jayframedisplay_p1StartPosY) := 190;	# P1 start Y position of the cells
+map(jayframedisplay_p2StartPosX) := 40;		# P2 start X position of the cells
+map(jayframedisplay_p2StartPosY) := 195;	# P2 start Y position of the cells
+
+map(jayframedisplay_offCell169X) := 57;		# Offset X based on widescreen (cells)
+map(jayframedisplay_offCell169Y) := 20;		# Offset Y based on widescreen (cells)
+map(jayframedisplay_offText169X) := 90;		# Offset X based on widescreen (text)
+map(jayframedisplay_offText169Y) := 20;		# Offset Y based on widescreen (text)
+
+map(jayframedisplay_spacing) := 3;			# Spacing between each cell
+map(jayframedisplay_scale) := 0.75;			# Scaling of each cell
+map(jayframedisplay_sprPriority) := 20;		# SprPriority of each cell
+map(jayframedisplay_onTop) := 1;			# OnTop of each cell
+
+map(jayframedisplay_items) := 80;			# Total amount of cells to draw (max 256)
+map(jayframedisplay_dark) := -100;			# Darkening constant on cells
+map(jayframedisplay_bright) := 90;			# Brightening constant on cells
+
+map(jayframedisplay_blankR) := 32;			# Red color value for a "blank" cell
+map(jayframedisplay_blankG) := 32;			# Green color value for a "blank" cell
+map(jayframedisplay_blankB) := 32;			# Blue color value for a "blank" cell
+
+map(jayframedisplay_startupR) := 32;		# Red color value for a "startup" cell
+map(jayframedisplay_startupG) := 216;		# Green color value for a "startup" cell
+map(jayframedisplay_startupB) := 32;		# Blue color value for a "startup" cell
+
+map(jayframedisplay_activeR) := 256;		# Red color value for an "active" cell
+map(jayframedisplay_activeG) := 32;			# Green color value for an "active" cell
+map(jayframedisplay_activeB) := 32;			# Blue color value for an "active" cell
+
+map(jayframedisplay_recoveryR) := 72;		# Red color value for a "recovery" cell
+map(jayframedisplay_recoveryG) := 32;		# Green color value for a "recovery" cell
+map(jayframedisplay_recoveryB) := 256;		# Blue color value for a "recovery" cell
+
+map(jayframedisplay_idleR) := 256;			# Red color value for an "idle" cell
+map(jayframedisplay_idleG) := 216;			# Green color value for an "idle" cell
+map(jayframedisplay_idleB) := 32;			# Blue color value for an "idle" cell
+
+map(jayframedisplay_moveR) := 0;			# Red color value for a "move" cell
+map(jayframedisplay_moveG) := 225;			# Green color value for a "move" cell
+map(jayframedisplay_moveB) := 200;			# Blue color value for a "move" cell
+
+map(jayframedisplay_projR) := 256;			# Red color value for a "proj" cell
+map(jayframedisplay_projG) := 64;			# Green color value for a "proj" cell
+map(jayframedisplay_projB) := 216;			# Blue color value for a "proj" cell
+
+map(jayframedisplay_p1TextPosX) := 39;		# P1 X position for the info text
+map(jayframedisplay_p1TextPosY) := 186;		# P1 Y position for the info text
+map(jayframedisplay_p2TextPosX) := 39;		# P2 X position for the info text
+map(jayframedisplay_p2TextPosY) := 202;		# P2 Y position for the info text
+
+map(jayframedisplay_textFont) := -1;		# Font for the info text
+map(jayframedisplay_textBank) := -1;		# Bank for the info text
+map(jayframedisplay_textAlign) := 1;		# Alignment for the info text
+map(jayframedisplay_textScale) := 0.333;	# Scale for the info text
+map(jayframedisplay_textLayer) := 1;		# Layer for the info text
+
+map(jayframedisplay_textPlusR) := 128;		# Red value for the info text (+oB)
+map(jayframedisplay_textPlusG) := 256;		# Green value for the info text (+oB)
+map(jayframedisplay_textPlusB) := 128;		# Blue for the info text (+oB)
+
+map(jayframedisplay_textMinusR) := 256;		# Red value for the info text (-oB)
+map(jayframedisplay_textMinusG) := 176;		# Green value for the info text (-oB)
+map(jayframedisplay_textMinusB) := 176;		# Blue value for the info text (-oB)
+
+# ==================================
+
+# Spawn helper
+ignoreHitPause if (!isHelper && (teamMode != Simul || teamMode = Simul && playerNo = teamSide) && roundState = 2 && playerNo = teamLeader && map(jayframedisplay_enable) = 1 && gameMode = "training") {
+	if (!numHelper(123123619)) {
+		helper{
+			name: "Frame Display";
+			id: 123123619;
+			stateno: 123123619;
+			pos: 32767,32767;
+			postype: P1;
+			facing: facing;
+			extendsMap: 1;
+			superMoveTime: -1;
+			pauseMoveTime: -1;
+		}
+	}
+}
+
+# Detect projectile (credit to Inktrebuchet for concept)
+if (!numHelper(123123316)) {
+	helper{
+		name: "Proj Detector";
+		id: 123123316;
+		stateno: 123123316;
+		pos: 0,0;
+		postype: P1;
+		facing: 1;
+		superMoveTime: -1;
+		pauseMoveTime: -1;
+	}
+}
+
+# ==================================
+		
+# Main state
+[StateDef 123123619; anim: -2;]
+
+ignoreHitPause {
+	let wide = (screenHeight/240);
+	let isWide = (screenWidth / screenHeight != 1.33333333);
+	let isHurt = (parent, moveType = H) || ((parent, moveType != A) && !(parent, ctrl));
+	let isAtk = (parent, moveType = A) || (parent, stateNo = map(atkState)) || ((enemyNear, moveType = H) || ((enemyNear, moveType != A) && !(enemyNear, ctrl))) || ((parent, prevMoveType = A) && (parent, moveType = I) && (parent, ctrl = 0));
+	let isMv = (parent, stateNo = [40,52]) || (parent, stateNo = [100,106]);
+	map(projData) := parent, map(jayframedisplay_projData);
+	
+	# Init vars
+	if (!time) {
+		map(atkState) := 123123619;
+	}
+	
+	# Start timers
+	if ((parent, map(jayframedisplay_settingActive)) || (enemyNear, map(jayframedisplay_settingActive))) {
+		if (!(parent, hitPauseTime) && !(enemyNear, hitPauseTime) && !gameVar(pausetime) && !gameVar(superpausetime)) { map(timer) := map(timer) + 1; }
+	} else {
+		map(timer) := 0;
+	}
+	
+	# Detect if cells are changing
+	if ($isAtk || $isHurt || $isMv) {
+		map(settingActive) := 1;
+	} else if (parent, stateNo = [0,169]) {
+		map(settingActive) := 0;
+	}
+	
+	# Reset cells for new sequence
+	# Loops get broken after 2500 iterations so this is the most amount of time you can sequence for :(
+	if (map(timer) = 1) {
+		# TODO cleanup 1st cell on reset
+		for i = 2; 2500 {
+			for j = 1; 40 {
+				var(($i*$j)-1) := 0;
+			}
+		}
+	}
+	
+	# Logic (movement)
+	if ($isMv) {
+		# Assign values
+		var(map(timer)) := 6;
+			
+		# Texts
+		map(cellCount) := map(timer);
+		map(textTotalStored) := map(timer);
+	# Logic (attacking)
+	} else if ($isAtk || playerIDExist(parent,map(jayframedisplay_projData)) || parent, numProj) {
+		if (parent, time = 1) {
+			map(startup) := 0;
+			map(active) := 0;
+			map(recovery) := 0;
+			map(moveEnd) := 0;
+			if ((parent, moveType = A) || (parent, stateNo = map(atkState))) {
+				map(atkState) := parent, stateNo;
+			}
+		}
+	
+		if (parent, stateNo = [0,169]) {
+			if (map(recovery) && !map(moveEnd)) {
+				if (map(recovery) > 0) {
+					map(moveEnd) := 1;
+					map(startup) := 0;
+					map(active) := 0;
+					map(recovery) := 0;
+				} else if (map(moveEnd)) {
+					var(map(timer)) := 5;
+				}
+			}
+		}
+			
+		# Assign values
+		if (parent, hitPauseTime = 0) {
+			# TODO Integrate projectile detection
+			if ((playerIDExist(map(projData)) || parent, numProj) && (parent, stateNo != [0,169])) {
+				var(map(timer)) := 6;
+			} else if (map(active) = 0 && (parent, animElemVar(numclsn1) = 0) && (parent, stateNo != [0,169])) {
+				map(moveEnd) := 0;
+				if (gameVar(pausetime) = 0 && gameVar(superpausetime) = 0) { map(startup) := map(startup) + 1; }
+				var(map(timer)) := 1;
+			} else if (parent, animElemVar(numclsn1) > 0 && parent, moveType = A) {
+				map(active) := map(active) + 1;
+				var(map(timer)) := 2;
+			} else if (map(active) > 0 && (parent, animElemVar(numclsn1) = 0)) {
+				map(recovery) := map(recovery) + 1;
+				var(map(timer)) := 3;
+			}
+			
+			# Texts
+			if (parent, stateNo != [0,169]) { map(textStartup) := map(startup); }
+			map(cellCount) := map(timer);
+			map(textTotalStored) := map(timer);
+		}
+	# Logic (hurt/blocking)
+	} else if ($isHurt) {
+		if ((parent, time = 1) && (parent, prevMoveType != H)) {
+			map(timer) := enemyNear, map(jayframedisplay_total);
+		}
+		
+		if (parent, stateNo = [0,119]) {
+			var(map(timer)) := 0;
+		}
+		
+		if (enemyNear, hitPauseTime = 0) {
+			var(map(timer)) := cond($isHurt, cond((parent, time = 1), 400, 4), 0);
+		}
+		map(cellCount) := map(timer);
+	}
+	
+	# Reset and update values
+	if ((parent, stateNo = [0,169]) && (parent, map(jayframedisplay_settingActive) = 0) && (enemyNear, map(jayframedisplay_settingActive) = 0)) {
+		# Calculate total cells in sequence
+		let startCount = 0;
+		let cellCount = 0;
+		for i = min(map(cellCount),2499); 0; -1 {
+			if (var($i) > 0) { let startCount = 1; }
+			if ($startCount) { let cellCount = $cellCount + 1; }
+		}
+		
+		# Set text values and update
+		map(totalCells) := $cellCount;
+		map(textAdvantage) := -parent, map(jayframedisplay_totalCells) + (enemyNear, map(jayframedisplay_totalCells));
+		map(textTotal) := map(textTotalStored);
+	}
+	
+	# Darken existing items when the last item is reached
+	if (map(timer) % map(jayframedisplay_items)) = map(jayframedisplay_items) - 1 {
+		for i = map(timer) - (map(jayframedisplay_items) - 1); map(timer) {
+			if (var($i) < 10) { var($i) := var($i) * 10; } else if (var($i) > 100) { var($i) := var($i) / 10; }
+		}
+	}
+	
+	if map(textAdvantage) < 0 {
+		let textR = map(jayframedisplay_textMinusR);
+		let textG = map(jayframedisplay_textMinusG);
+		let textB = map(jayframedisplay_textMinusB);
+	} else if map(textAdvantage) > 0 {
+		let textR = map(jayframedisplay_textPlusR);
+		let textG = map(jayframedisplay_textPlusG);
+		let textB = map(jayframedisplay_textPlusB);
+	} else {
+		let textR = 256;
+		let textG = 256;
+		let textB = 256;
+	}
+	
+	# Text
+	# TODO add text for cell totals
+	text{
+		id: 123619;
+		text: "%dP\tStartup: %vF / Total: %vF / Advantage: %vF";
+		pos: const240p(cond(root, teamSide = 1, map(jayframedisplay_p1TextPosX), map(jayframedisplay_p2TextPosX))+(map(jayframedisplay_offText169X) * $isWide)) * $wide, const240p(cond(root, teamSide = 1, map(jayframedisplay_p1TextPosY), map(jayframedisplay_p2TextPosY))+(map(jayframedisplay_offText169Y) * $isWide));
+		params: parent, playerNo, map(textStartup), map(textTotal), map(textAdvantage);
+		font: map(jayframedisplay_textFont);
+		layerno: map(jayframedisplay_textLayer);
+		bank: map(jayframedisplay_textBank);
+		align: map(jayframedisplay_textAlign);
+		scale: map(jayframedisplay_textScale), map(jayframedisplay_textScale);
+		color: $textR,$textG,$textB;
+	}
+	
+	# Create cells
+	for i = 0; map(jayframedisplay_items) - 1 {
+		if (!numExplod(12361900 + $i)) {
+			explod{
+				id: 12361900 + $i;
+				anim: JFD 0;
+			}
+		} else {
+			modifyExplod{
+				id: 12361900 + $i;
+				anim: JFD 0;
+				pos: const240p(cond(root,teamSide = 1, map(jayframedisplay_p1StartPosX), map(jayframedisplay_p2StartPosX)) + (map(jayframedisplay_offCell169X) * $isWide) + ($i * map(jayframedisplay_spacing))) * $wide, const240p(cond(root,teamSide = 1, map(jayframedisplay_p1StartPosY), map(jayframedisplay_p2StartPosY)) + (map(jayframedisplay_offCell169Y) * $isWide)) * $wide;
+				postype: left;
+				sprpriority: map(jayframedisplay_sprPriority);
+				bindtime: -1;
+				removetime: -1;
+				scale: map(jayframedisplay_scale), map(jayframedisplay_scale);
+				supermovetime: -1;
+				pausemovetime: -1;
+				onTop: map(jayframedisplay_onTop);
+			}
+		}
+	}
+	
+	# Update cells
+	# 1D-array workaround with var(0) .. var(n)
+	for i = 0; min(max(map(jayframedisplay_items), map(cellCount)), 2500) - 1 {
+		# Blank color
+		let r = map(jayframedisplay_blankR);
+		let g = map(jayframedisplay_blankG);
+		let b = map(jayframedisplay_blankB);
+		let colFactor = 0;
+		
+		switch var($i) {
+			# Startup color
+			case 1; 10; 100 :
+				if (var($i) = 10) {
+					let colFactor = map(jayframedisplay_dark);
+				} else if (var($i) = 100) {
+					let colFactor = map(jayframedisplay_bright);
+				}	
+				let r = map(jayframedisplay_startupR) + $colFactor;
+				let g = map(jayframedisplay_startupG) + $colFactor;
+				let b = map(jayframedisplay_startupB) + $colFactor;
+			# Active color
+			case 2; 20; 200 :
+				if (var($i) = 20) {
+					let colFactor = map(jayframedisplay_dark);
+				} else if (var($i) = 200) {
+					let colFactor = map(jayframedisplay_bright);
+				}	
+				let r = map(jayframedisplay_activeR) + $colFactor;
+				let g = map(jayframedisplay_activeG) + $colFactor;
+				let b = map(jayframedisplay_activeB) + $colFactor;
+			# Recovery color
+			case 3; 30; 300 :
+				if (var($i) = 30) {
+					let colFactor = map(jayframedisplay_dark);
+				} else if (var($i) = 300) {
+					let colFactor = map(jayframedisplay_bright);
+				}	
+				let r = map(jayframedisplay_recoveryR) + $colFactor;
+				let g = map(jayframedisplay_recoveryG) + $colFactor;
+				let b = map(jayframedisplay_recoveryB) + $colFactor;
+			# Idle color
+			case 4; 40; 400 :
+				if (var($i) = 40) {
+					let colFactor = map(jayframedisplay_dark);
+				} else if (var($i) = 400) {
+					let colFactor = map(jayframedisplay_bright);
+				}				
+				let r = map(jayframedisplay_idleR) + $colFactor;
+				let g = map(jayframedisplay_idleG) + $colFactor;
+				let b = map(jayframedisplay_idleB) + $colFactor;
+			# Projectile color
+			case 5; 50; 500 :
+				if (var($i) = 50) {
+					let colFactor = map(jayframedisplay_dark);
+				} else if (var($i) = 500) {
+					let colFactor = map(jayframedisplay_bright);
+				}				
+				let r = map(jayframedisplay_projR) + $colFactor;
+				let g = map(jayframedisplay_projG) + $colFactor;
+				let b = map(jayframedisplay_projB) + $colFactor;
+			# Move color
+			case 6; 60; 600 :
+				if (var($i) = 60) {
+					let colFactor = map(jayframedisplay_dark);
+				} else if (var($i) = 600) {
+					let colFactor = map(jayframedisplay_bright);
+				}				
+				let r = map(jayframedisplay_moveR) + $colFactor;
+				let g = map(jayframedisplay_moveG) + $colFactor;
+				let b = map(jayframedisplay_moveB) + $colFactor;
+			default: 
+				let r = map(jayframedisplay_blankR);
+				let g = map(jayframedisplay_blankG);
+				let b = map(jayframedisplay_blankB);
+		}
+
+		modifyExplod{
+			id: 12361900 + ($i % map(jayframedisplay_items));
+			palfx.time: 2;
+			palfx.mul: $r, $g, $b;
+		}
+	}
+
+	# Kill if tagged out
+	if (root, playerNo != teamLeader) {
+		# Kill explods, then kill self
+		for i = 0; map(jayframedisplay_items) - 1 {
+			removeExplod{id: 12361900 + $i;}
+		}
+		destroySelf{}
+	}
+	
+	# Setting flag map
+	parent, map(jayframedisplay_settingActive) := map(settingActive);
+	parent, map(jayframedisplay_atkState) := map(atkState);
+	
+	# Startup/total root maps
+	parent, map(jayframedisplay_startup) := map(textStartup);
+	parent, map(jayframedisplay_total) := map(textTotalStored);
+	parent, map(jayframedisplay_advAtkTotal) := map(advAtkTotal);
+	
+	# Advantage root maps
+	parent, map(jayframedisplay_totalCells) := map(totalCells);
+	parent, map(jayframedisplay_advantage) := map(textAdvantage);
+	parent, map(jayframedisplay_timer) := map(timer);
+	
+	# Debug
+	displayToClipboard{
+		text: "Frame Display by jay_ts\nStartup: %v(%v),%v / Total: %v,%v / Adv: %v(%v), %v(%v) / Timers: %v, %v";
+		params: parent, map(jayframedisplay_startup),
+				map(startup),
+				enemyNear, map(jayframedisplay_startup),
+				parent, map(jayframedisplay_total),
+				enemyNear, map(jayframedisplay_total),
+				parent, map(jayframedisplay_advantage),
+				parent, map(jayframedisplay_totalCells),
+				enemyNear, map(jayframedisplay_advantage),
+				enemyNear, map(jayframedisplay_totalCells),
+				parent, map(jayframedisplay_timer),
+				enemyNear, map(jayframedisplay_timer);
+	}
+	appendToClipboard{
+		text: "\nprevMoveType = A: %d / enemyMoveType = A/H: %d,%d";
+		params: parent, prevMoveType = A,
+				enemyNear, moveType = A,
+				enemyNear, prevMoveType = H;
+	}
+}
+
+# ==================================
+
+[StateDef 123123316; anim: -2;]
+
+if (!time) {
+	let pid = 0;
+}
+
+ignoreHitPause {
+	if ($pid = 0) { let pid = id; }
+
+	# Find player IDs
+	for i = 0; 25 {
+		if (playerIDExist($pid + $i)) {
+			let pid = $pid + 1;
+		}
+	}
+	
+	if (playerIdExist(root, id)) {
+		bindToRoot{
+			time: 1;
+			facing: 1;
+			pos: 0,-2;
+		}
+		
+		# Check if helper is projectile
+		for i = -1; -10; -1 {
+			if (playerIdExist($pid + $i) && ifElse(root,teamSide = 1, playerId($pid + $i),teamSide = 1, playerId($pid + $i),teamSide = 2) && playerId($pid + $i),hitDefAttr = ASC, NP, SP, HP) {
+				parent, map(jayframedisplay_projData) := $pid + $i;
+			}
+		}
+	}
+	
+	displayToClipboard{text: "Highest playerId: %d / Proj helper playerId: %v"; params: $pid - 1, parent, map(jayframedisplay_projData);}
+}

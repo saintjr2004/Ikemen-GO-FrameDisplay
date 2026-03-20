@@ -1,0 +1,8 @@
+[Info]
+prefix = JFD
+name = "jayframedisplay"
+author = "jay_ts"
+
+[Files]
+sff = jayframedisplay.sff
+air = jayframedisplay.air
