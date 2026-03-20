@@ -117,8 +117,8 @@ ignoreHitPause if (!isHelper && roundState = 2 && playerNo = teamLeader && map(j
 ignoreHitPause {
 	let wide = (screenHeight/240);
 	let isWide = (screenWidth / screenHeight != 1.33333333);
-	let isHurt = (parent, moveType = H) || ((parent, moveType != A) && !(parent, ctrl));
-	let isAtk = (parent, moveType = A) || (parent, stateNo = map(atkState)) || ((enemyNear, moveType = H) || ((enemyNear, moveType != A) && !(enemyNear, ctrl))) || ((parent, prevMoveType = A) && (parent, moveType = I) && (parent, ctrl = 0));
+	let isHurt = (parent, moveType = H) || (((parent, stateNo = [5000,5999]) && !(parent, ctrl));
+	let isAtk = (parent, moveType = A) || (parent, stateNo = map(atkState)) || ((enemyNear, moveType = H) || ((enemyNear, stateNo = [5000,5999]) && !(enemyNear, ctrl))) || ((parent, prevMoveType = A) && (parent, moveType = I) && (parent, ctrl = 0));
 	let isMv = (parent, stateNo = [40,52]) || (parent, stateNo = [100,106]);
 	map(projData) := parent, map(jayframedisplay_projData);
 	
