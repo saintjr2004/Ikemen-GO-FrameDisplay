@@ -42,7 +42,7 @@ map(jayframedisplay_p2StartPosY) := 195;	# P2 start Y position of the cells
 
 map(jayframedisplay_offCell169X) := 57;		# Offset X based on widescreen (cells)
 map(jayframedisplay_offCell169Y) := 20;		# Offset Y based on widescreen (cells)
-map(jayframedisplay_offText169X) := 90;		# Offset X based on widescreen (text)
+map(jayframedisplay_offText169X) := 56;		# Offset X based on widescreen (text)
 map(jayframedisplay_offText169Y) := 20;		# Offset Y based on widescreen (text)
 
 map(jayframedisplay_spacing) := 3;			# Spacing between each cell
