@@ -17,7 +17,7 @@ map(jayframedisplay_p2StartPosY) := 195;	# P2 start Y position of the cells
 
 map(jayframedisplay_offCell169X) := 57;		# Offset X based on widescreen (cells)
 map(jayframedisplay_offCell169Y) := 20;		# Offset Y based on widescreen (cells)
-map(jayframedisplay_offText169X) := 90;		# Offset X based on widescreen (text)
+map(jayframedisplay_offText169X) := 56;		# Offset X based on widescreen (text)
 map(jayframedisplay_offText169Y) := 20;		# Offset Y based on widescreen (text)
 
 map(jayframedisplay_spacing) := 3;			# Spacing between each cell
@@ -115,8 +115,9 @@ ignoreHitPause if (!isHelper && roundState = 2 && playerNo = teamLeader && map(j
 [StateDef 123123619; anim: -2;]
 
 ignoreHitPause {
-	let wide = (screenHeight/240);
-	let isWide = (screenWidth / screenHeight != 1.33333333);
+	# screenWidth/screenHeight are in the char's localcoord, so compare against 240p converted to that localcoord
+	let wide = (screenHeight / const240p(240));
+	let isWide = (screenWidth / screenHeight > 1.34);
 	let isHurt = (parent, moveType = H) || ((parent, stateNo = [5000,5999]) && !(parent, ctrl));
 	let isAtk = (parent, moveType = A) || (parent, stateNo = map(atkState)) || ((enemyNear, moveType = H) || ((enemyNear, stateNo = [5000,5999]) && !(enemyNear, ctrl))) || ((parent, prevMoveType = A) && (parent, moveType = I) && (parent, ctrl = 0));
 	let isMv = (parent, stateNo = [40,52]) || (parent, stateNo = [100,106]);
@@ -260,12 +261,14 @@ ignoreHitPause {
 		let textB = 256;
 	}
 	
+	let cellY = const240p(cond(root,teamSide = 1, map(jayframedisplay_p1StartPosY), map(jayframedisplay_p2StartPosY)) + (map(jayframedisplay_offCell169Y) * $isWide)) * $wide;
+
 	# Text
 	# TODO add text for cell totals
 	text{
 		id: 123619;
 		text: "%dP\tStartup: %vF / Total: %vF / Advantage: %vF";
-		pos: const240p(cond(root, teamSide = 1, map(jayframedisplay_p1TextPosX), map(jayframedisplay_p2TextPosX))+(map(jayframedisplay_offText169X) * $isWide)) * $wide, const240p(cond(root, teamSide = 1, map(jayframedisplay_p1TextPosY), map(jayframedisplay_p2TextPosY))+(map(jayframedisplay_offText169Y) * $isWide));
+		pos: const240p(cond(root, teamSide = 1, map(jayframedisplay_p1TextPosX), map(jayframedisplay_p2TextPosX))+(map(jayframedisplay_offText169X) * $isWide)) * $wide, $cellY + const240p(cond(root, teamSide = 1, map(jayframedisplay_p1TextPosY) - map(jayframedisplay_p1StartPosY), map(jayframedisplay_p2TextPosY) - map(jayframedisplay_p2StartPosY)) + ((map(jayframedisplay_offText169Y) - map(jayframedisplay_offCell169Y)) * $isWide));
 		params: parent, playerNo, map(textStartup), map(textTotal), map(textAdvantage);
 		font: map(jayframedisplay_textFont);
 		layerno: map(jayframedisplay_textLayer);
@@ -276,20 +279,32 @@ ignoreHitPause {
 	}
 	
 	# Create cells
+	# With ikemenversion chars, modifyExplod does not reset the binding/space
 	for i = 0; map(jayframedisplay_items) - 1 {
+		let cellX = const240p(cond(root,teamSide = 1, map(jayframedisplay_p1StartPosX), map(jayframedisplay_p2StartPosX)) + (map(jayframedisplay_offCell169X) * $isWide) + ($i * map(jayframedisplay_spacing))) * $wide;
 		if (!numExplod(12361900 + $i)) {
 			explod{
 				id: 12361900 + $i;
 				anim: JFD 0;
+				postype: left;
+				space: screen;
+				pos: $cellX, $cellY;
+				sprpriority: map(jayframedisplay_sprPriority);
+				bindtime: 0;
+				removetime: -1;
+				scale: map(jayframedisplay_scale), map(jayframedisplay_scale);
+				supermovetime: -1;
+				pausemovetime: -1;
+				onTop: map(jayframedisplay_onTop);
 			}
 		} else {
 			modifyExplod{
 				id: 12361900 + $i;
-				anim: JFD 0;
-				pos: const240p(cond(root,teamSide = 1, map(jayframedisplay_p1StartPosX), map(jayframedisplay_p2StartPosX)) + (map(jayframedisplay_offCell169X) * $isWide) + ($i * map(jayframedisplay_spacing))) * $wide, const240p(cond(root,teamSide = 1, map(jayframedisplay_p1StartPosY), map(jayframedisplay_p2StartPosY)) + (map(jayframedisplay_offCell169Y) * $isWide)) * $wide;
 				postype: left;
+				space: screen;
+				pos: $cellX, $cellY;
 				sprpriority: map(jayframedisplay_sprPriority);
-				bindtime: -1;
+				bindtime: 0;
 				removetime: -1;
 				scale: map(jayframedisplay_scale), map(jayframedisplay_scale);
 				supermovetime: -1;
