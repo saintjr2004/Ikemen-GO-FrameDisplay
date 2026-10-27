@@ -145,6 +145,8 @@ ignoreHitPause {
 	# Reset cells for new sequence
 	# Loops get broken after 2500 iterations so this is the most amount of time you can sequence for :(
 	if (map(timer) = 1) {
+		map(wasHurt) := 0;
+		map(hasTotal) := 0;
 		# TODO cleanup 1st cell on reset
 		for i = 2; 2500 {
 			for j = 1; 40 {
@@ -161,6 +163,7 @@ ignoreHitPause {
 		# Texts
 		map(cellCount) := map(timer);
 		map(textTotalStored) := map(timer);
+		map(hasTotal) := 1;
 	# Logic (attacking)
 	} else if ($isAtk || playerIDExist(parent,map(jayframedisplay_projData)) || parent, numProj) {
 		if (parent, time = 1) {
@@ -204,12 +207,18 @@ ignoreHitPause {
 			}
 			
 			# Texts
-			if (parent, stateNo != [0,169]) { map(textStartup) := map(startup); }
+			# Startup includes the first active frame (a move "active on frame N" has N startup)
+			# Total stops when the move ends, not when the opponent leaves hitstun
+			if (parent, stateNo != [0,169]) {
+				map(textStartup) := map(startup) + (map(active) > 0);
+				map(textTotalStored) := map(timer);
+				map(hasTotal) := 1;
+			}
 			map(cellCount) := map(timer);
-			map(textTotalStored) := map(timer);
 		}
 	# Logic (hurt/blocking)
 	} else if ($isHurt) {
+		map(wasHurt) := 1;
 		if ((parent, time = 1) && (parent, prevMoveType != H)) {
 			map(timer) := enemyNear, map(jayframedisplay_total);
 		}
@@ -230,14 +239,27 @@ ignoreHitPause {
 		let startCount = 0;
 		let cellCount = 0;
 		for i = min(map(cellCount),2499); 0; -1 {
-			if (var($i) > 0) { let startCount = 1; }
+			# The hurt side regains ctrl before hits are checked, so it can already guard on that frame,
+			# while the attacker's command check for the frame it regains ctrl has already passed.
+			# Drop the hurt side's last cell (once) so the bar matches the advantage.
+			if (var($i) > 0 && !$startCount && map(wasHurt)) {
+				var($i) := 0;
+				map(wasHurt) := 0;
+			} else if (var($i) > 0) {
+				let startCount = 1;
+			}
 			if ($startCount) { let cellCount = $cellCount + 1; }
 		}
-		
+
 		# Set text values and update
 		map(totalCells) := $cellCount;
-		map(textAdvantage) := -parent, map(jayframedisplay_totalCells) + (enemyNear, map(jayframedisplay_totalCells));
-		map(textTotal) := map(textTotalStored);
+		# Wait until the opponent's helper has run its own reset (timer 0), otherwise its total is from the previous sequence
+		if (enemyNear, map(jayframedisplay_timer) = 0) {
+			map(textAdvantage) := (enemyNear, map(jayframedisplay_totalCells)) - map(totalCells);
+		}
+		# textTotalStored is the last frame's timer index (starts at 0), so add 1 for a frame count.
+		# It stays an index because the defender's timer sync reads it as one.
+		map(textTotal) := cond(map(hasTotal), map(textTotalStored) + 1, 0);
 	}
 	
 	# Darken existing items when the last item is reached
