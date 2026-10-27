@@ -79,7 +79,7 @@ map(jayframedisplay_textMinusB) := 176;		# Blue value for the info text (-oB)
 # ==================================
 
 # Spawn helper
-ignoreHitPause if (!isHelper && roundState = 2 && playerNo = teamLeader && map(jayframedisplay_enable) = 1 && gameMode = "training") {
+ignoreHitPause if (!isHelper && roundState = 2 && playerNo = teamLeader && map(jayframedisplay_enable) = 1 && map(jayframedisplay_menuoff) = 0 && gameMode = "training") {
 	if (!numHelper(123123619)) {
 		helper{
 			name: "Frame Display";
@@ -397,8 +397,8 @@ ignoreHitPause {
 		}
 	}
 
-	# Kill if tagged out
-	if (root, playerNo != teamLeader) {
+	# Kill if tagged out or turned off in the pause menu
+	if (root, playerNo != teamLeader) || (root, map(jayframedisplay_menuoff)) {
 		# Kill explods, then kill self
 		for i = 0; map(jayframedisplay_items) - 1 {
 			removeExplod{id: 12361900 + $i;}

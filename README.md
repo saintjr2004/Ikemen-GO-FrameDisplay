@@ -22,6 +22,11 @@ States  = data/functions.zss, data/action.zss, data/dizzy.zss, data/guardbreak.z
 Fx      = data/gofx/gofx.def, external/mods/jayframedisplay/jayframedisplay.def
 ```
 
+## Training Pause Menu Toggle
+
+The module adds a **Frame Display** On/Off option to the Training Menu of the training pause menu.
+It needs `jayframedisplay.lua` and `+system.def`, which IKEMEN only loads automatically from `external/mods`.
+
 ## Configuration
 
 Within `jayframedisplay.zss`, you have several configuration options to tweak the display of the cells and the text information.
