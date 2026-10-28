@@ -41,6 +41,10 @@ map(jayframedisplay_activeR) := 256;		# Red color value for an "active" cell
 map(jayframedisplay_activeG) := 32;			# Green color value for an "active" cell
 map(jayframedisplay_activeB) := 32;			# Blue color value for an "active" cell
 
+map(jayframedisplay_hpActiveR) := 256;		# Red color value for an "active" cell followed by active frames played during hitpause
+map(jayframedisplay_hpActiveG) := 144;		# Green color value for an "active" cell followed by active frames played during hitpause
+map(jayframedisplay_hpActiveB) := 176;		# Blue color value for an "active" cell followed by active frames played during hitpause
+
 map(jayframedisplay_recoveryR) := 72;		# Red color value for a "recovery" cell
 map(jayframedisplay_recoveryG) := 32;		# Green color value for a "recovery" cell
 map(jayframedisplay_recoveryB) := 256;		# Blue color value for a "recovery" cell
@@ -169,6 +173,7 @@ ignoreHitPause {
 		if (parent, time = 1) {
 			map(startup) := 0;
 			map(active) := 0;
+			map(hpActive) := 0;
 			map(recovery) := 0;
 			map(moveEnd) := 0;
 			if ((parent, moveType = A) || (parent, stateNo = map(atkState))) {
@@ -189,6 +194,15 @@ ignoreHitPause {
 			}
 		}
 			
+		# Moves can keep animating during hitpause (AssertSpecial animatehitpause), so those frames never get a cell.
+		# If the anim moved on since the last hitpause frame, that frame was played during the hitpause.
+		# Mark the last active cell when it had a hitbox.
+		if (map(prevHitPause) && map(active) > 0 && map(prevClsn1) && ((parent, anim) != map(prevAnim) || (parent, animTime) != map(prevAnimTime))) {
+			map(hpActive) := map(hpActive) + 1;
+			let c = map(lastActiveCell);
+			if (var($c) = 2) { var($c) := 7; } else if (var($c) = 20) { var($c) := 70; } else if (var($c) = 200) { var($c) := 700; }
+		}
+
 		# Assign values
 		if (parent, hitPauseTime = 0) {
 			# TODO Integrate projectile detection
@@ -200,6 +214,7 @@ ignoreHitPause {
 				var(map(timer)) := 1;
 			} else if (parent, animElemVar(numclsn1) > 0 && parent, moveType = A) {
 				map(active) := map(active) + 1;
+				map(lastActiveCell) := map(timer);
 				var(map(timer)) := 2;
 			} else if (map(active) > 0 && (parent, animElemVar(numclsn1) = 0)) {
 				map(recovery) := map(recovery) + 1;
@@ -211,6 +226,7 @@ ignoreHitPause {
 			# Total stops when the move ends, not when the opponent leaves hitstun
 			if (parent, stateNo != [0,169]) {
 				map(textStartup) := map(startup) + (map(active) > 0);
+				map(textHpActive) := map(hpActive);
 				map(textTotalStored) := map(timer);
 				map(hasTotal) := 1;
 			}
@@ -232,7 +248,13 @@ ignoreHitPause {
 		}
 		map(cellCount) := map(timer);
 	}
-	
+
+	# Remember this frame's anim position for the hitpause animation check
+	map(prevHitPause) := parent, hitPauseTime;
+	map(prevAnim) := parent, anim;
+	map(prevAnimTime) := parent, animTime;
+	map(prevClsn1) := ((parent, animElemVar(numclsn1)) > 0) && (parent, moveType = A);
+
 	# Reset and update values
 	if ((parent, stateNo = [0,169]) && (parent, map(jayframedisplay_settingActive) = 0) && (enemyNear, map(jayframedisplay_settingActive) = 0)) {
 		# Calculate total cells in sequence
@@ -287,17 +309,34 @@ ignoreHitPause {
 
 	# Text
 	# TODO add text for cell totals
-	text{
-		id: 123619;
-		text: "%dP\tStartup: %vF / Total: %vF / Advantage: %vF";
-		pos: const240p(cond(root, teamSide = 1, map(jayframedisplay_p1TextPosX), map(jayframedisplay_p2TextPosX))+(map(jayframedisplay_offText169X) * $isWide)) * $wide, $cellY + const240p(cond(root, teamSide = 1, map(jayframedisplay_p1TextPosY) - map(jayframedisplay_p1StartPosY), map(jayframedisplay_p2TextPosY) - map(jayframedisplay_p2StartPosY)) + ((map(jayframedisplay_offText169Y) - map(jayframedisplay_offCell169Y)) * $isWide));
-		params: parent, playerNo, map(textStartup), map(textTotal), map(textAdvantage);
-		font: map(jayframedisplay_textFont);
-		layerno: map(jayframedisplay_textLayer);
-		bank: map(jayframedisplay_textBank);
-		align: map(jayframedisplay_textAlign);
-		scale: map(jayframedisplay_textScale), map(jayframedisplay_textScale);
-		color: $textR,$textG,$textB;
+	let textX = const240p(cond(root, teamSide = 1, map(jayframedisplay_p1TextPosX), map(jayframedisplay_p2TextPosX))+(map(jayframedisplay_offText169X) * $isWide)) * $wide;
+	let textY = $cellY + const240p(cond(root, teamSide = 1, map(jayframedisplay_p1TextPosY) - map(jayframedisplay_p1StartPosY), map(jayframedisplay_p2TextPosY) - map(jayframedisplay_p2StartPosY)) + ((map(jayframedisplay_offText169Y) - map(jayframedisplay_offCell169Y)) * $isWide));
+	if (map(textHpActive) > 0) {
+		text{
+			id: 123619;
+			text: "%dP\tStartup: %vF / Total: %vF / Advantage: %vF / +%vF active in hitpause";
+			pos: $textX, $textY;
+			params: parent, playerNo, map(textStartup), map(textTotal), map(textAdvantage), map(textHpActive);
+			font: map(jayframedisplay_textFont);
+			layerno: map(jayframedisplay_textLayer);
+			bank: map(jayframedisplay_textBank);
+			align: map(jayframedisplay_textAlign);
+			scale: map(jayframedisplay_textScale), map(jayframedisplay_textScale);
+			color: $textR,$textG,$textB;
+		}
+	} else {
+		text{
+			id: 123619;
+			text: "%dP\tStartup: %vF / Total: %vF / Advantage: %vF";
+			pos: $textX, $textY;
+			params: parent, playerNo, map(textStartup), map(textTotal), map(textAdvantage);
+			font: map(jayframedisplay_textFont);
+			layerno: map(jayframedisplay_textLayer);
+			bank: map(jayframedisplay_textBank);
+			align: map(jayframedisplay_textAlign);
+			scale: map(jayframedisplay_textScale), map(jayframedisplay_textScale);
+			color: $textR,$textG,$textB;
+		}
 	}
 	
 	# Create cells
@@ -406,7 +445,17 @@ ignoreHitPause {
 				let r = map(jayframedisplay_moveR) + $colFactor;
 				let g = map(jayframedisplay_moveG) + $colFactor;
 				let b = map(jayframedisplay_moveB) + $colFactor;
-			default: 
+			# Active color (more active frames were played during hitpause)
+			case 7; 70; 700 :
+				if (var($i) = 70) {
+					let colFactor = map(jayframedisplay_dark);
+				} else if (var($i) = 700) {
+					let colFactor = map(jayframedisplay_bright);
+				}
+				let r = map(jayframedisplay_hpActiveR) + $colFactor;
+				let g = map(jayframedisplay_hpActiveG) + $colFactor;
+				let b = map(jayframedisplay_hpActiveB) + $colFactor;
+			default:
 				let r = map(jayframedisplay_blankR);
 				let g = map(jayframedisplay_blankG);
 				let b = map(jayframedisplay_blankB);
