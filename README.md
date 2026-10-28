@@ -37,7 +37,7 @@ The config name is the colour's prefix in the [Configuration](#configuration) se
 | Dark grey | `blank` | Nothing recorded for this frame. The defender's last stun cell is also cleared when the sequence ends: the defender can already guard on that frame, so dropping it makes the bar match the advantage. |
 | Green | `startup` | Attacking, before the first hitbox comes out. Frames during a pause or superpause are not counted. |
 | Red | `active` | The current animation frame has a hitbox (Clsn1) and the character is attacking. |
-| Pink | `hpActive` | An active frame followed by more hitbox frames that played out during hitpause. This happens when a move keeps animating through hitpause (`AssertSpecial` with `animatehitpause`). Those frames don't get a cell of their own, so the bars stay aligned; the info text shows `+NF active in hitpause` instead. |
+| Pink | `hpActive` | An active frame whose following hitbox frames were used up during hitpause. This happens when a move keeps animating through hitpause (`AssertSpecial` with `animatehitpause`), or jumps past its remaining active frames with a `ChangeAnim` during hitpause. Those frames don't get a cell of their own, so the bars stay aligned; the info text shows `+NF active in hitpause` instead. The count only includes hitbox frames the animation reached during the freeze, so frames skipped over without being reached aren't counted. |
 | Blue | `recovery` | After the active frames, without a hitbox, until the character returns to a neutral state. |
 | Yellow | `idle` | Despite the name, this is the defender's hitstun or blockstun. |
 | Cyan | `move` | Walking, running, dashing or backdashing. Also used while the character has a projectile on screen during an attack. |
