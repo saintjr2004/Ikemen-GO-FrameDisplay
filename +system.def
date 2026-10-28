@@ -1,0 +1,5 @@
+; FRAME DISPLAY by jay_ts
+; Ikemen GO appends this file to the screenpack's system.def (see jayframedisplay.lua)
+
+[Training Pause Menu]
+menu.itemname.menutraining.framedisplay = Frame Display
