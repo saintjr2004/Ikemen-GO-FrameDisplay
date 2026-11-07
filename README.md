@@ -22,6 +22,34 @@ States  = data/functions.zss, data/action.zss, data/dizzy.zss, data/guardbreak.z
 Fx      = data/gofx/gofx.def, external/mods/jayframedisplay/jayframedisplay.def
 ```
 
+## Training Pause Menu Toggle
+
+The module adds a **Frame Display** On/Off option to the Training Menu of the training pause menu.
+It needs `jayframedisplay.lua` and `+system.def`, which IKEMEN only loads automatically from `external/mods`.
+
+## Reading the Frame Meter
+
+Each player has a row of cells, one cell per frame. The colour of a cell shows what that player was doing on that frame.
+The config name is the colour's prefix in the [Configuration](#configuration) section (for example, `startup` sets `jayframedisplay_startupR/G/B`).
+
+| Colour (default) | Config name | Meaning |
+|---|---|---|
+| Dark grey | `blank` | Nothing recorded for this frame. The defender's last stun cell is also cleared when the sequence ends: the defender can already guard on that frame, so dropping it makes the bar match the advantage. |
+| Green | `startup` | Attacking, before the first hitbox comes out. Frames during a pause or superpause are not counted. |
+| Red | `active` | The current animation frame has a hitbox (Clsn1) and the character is attacking. |
+| Pink | `hpActive` | An active frame whose following hitbox frames were used up during hitpause. This happens when a move keeps animating through hitpause (`AssertSpecial` with `animatehitpause`), or jumps past its remaining active frames with a `ChangeAnim` during hitpause. Those frames don't get a cell of their own, so the bars stay aligned; the info text shows `+NF active in hitpause` instead. The count only includes hitbox frames the animation reached during the freeze, so frames skipped over without being reached aren't counted. |
+| Blue | `recovery` | After the active frames, without a hitbox, until the character returns to a neutral state. |
+| Yellow | `idle` | Despite the name, this is the defender's hitstun or blockstun. |
+| Cyan | `move` | Walking, running, dashing or backdashing. Also used while the character has a projectile on screen during an attack. |
+| Magenta | `proj` | Currently unused. Projectile frames are shown in cyan. |
+
+**Brighter and darker cells**
+
+- A brighter cell marks the defender's first hitstun or blockstun frame, which is where the hit or block landed.
+- The row holds `jayframedisplay_items` cells (80 by default). When a sequence fills the row, it wraps back to the left and the previous pass is darkened. New frames are drawn over it from the left, so the dimmed cells to the right are left over from the previous pass.
+
+The brightness change is set by `jayframedisplay_bright` and `jayframedisplay_dark`.
+
 ## Configuration
 
 Within `jayframedisplay.zss`, you have several configuration options to tweak the display of the cells and the text information.
@@ -65,6 +93,10 @@ map(jayframedisplay_startupB) := 32;		# Blue color value for a "startup" cell
 map(jayframedisplay_activeR) := 256;		# Red color value for an "active" cell
 map(jayframedisplay_activeG) := 32;			# Green color value for an "active" cell
 map(jayframedisplay_activeB) := 32;			# Blue color value for an "active" cell
+
+map(jayframedisplay_hpActiveR) := 256;		# Red color value for an "active" cell followed by active frames played during hitpause
+map(jayframedisplay_hpActiveG) := 144;		# Green color value for an "active" cell followed by active frames played during hitpause
+map(jayframedisplay_hpActiveB) := 176;		# Blue color value for an "active" cell followed by active frames played during hitpause
 
 map(jayframedisplay_recoveryR) := 72;		# Red color value for a "recovery" cell
 map(jayframedisplay_recoveryG) := 32;		# Green color value for a "recovery" cell
